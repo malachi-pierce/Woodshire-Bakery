@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woodshire Bakery 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #2a1810;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .bakery {
+            width: 60%;
+            position: relative;
+            border-right: 8px solid #4a3c28;
+        }
+
+        .village {
+            width: 40%;
+            position: relative;
+        }
+
+        #bakery-canvas, #village-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bakery-sign {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #d4a574;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 3px solid #8b6f47;
+            font-weight: bold;
+            font-size: 18px;
+            color: #3a2a1a;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 200;
+        }
+
+        .stat {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .ingredients-panel {
+            position: absolute;
+            top: 150px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+
+        .ingredient-btn {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            background: #d4a574;
+            border: 3px solid #8b6f47;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 24px;
+            text-align: center;
+            line-height: 54px;
+        }
+
+        .ingredient-btn:hover {
+            transform: scale(1.1);
+            background: #e4b584;
+        }
+
+        .ingredient-btn.selected {
+            background: #ff6b6b;
+            transform: scale(1.15);
+        }
+
+        .bake-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .bake-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .bake-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .upgrade-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .upgrade-btn:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .upgrade-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .plot-twist-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .plot-twist-overlay.active {
+            display: flex;
+        }
+
+        .plot-twist-content {
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            max-width: 600px;
+            animation: fadeIn 2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            z-index: 300;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="bakery">
+            <div class="bakery-sign">Woodshire Bakery</div>
+            <canvas id="bakery-canvas"></canvas>
+            <div class="ingredients-panel">
+                <div class="ingredient-btn" data-ingredient="flour">🌾</div>
+                <div class="ingredient-btn" data-ingredient="sugar">🍚</div>
+                <div class="ingredient-btn" data-ingredient="eggs">🥚</div>
+                <div class="ingredient-btn" data-ingredient="milk">🥛</div>
+            </div>
+            <button class="bake-btn" id="bakeBtn">BAKE CAKE</button>
+            <button class="upgrade-btn" id="upgradeBtn">Upgrade (10 coins)</button>
+        </div>
+        <div class="village">
+            <canvas id="village-canvas"></canvas>
+        </div>
+    </div>
+
+    <div class="ui">
+        <div class="stat">Cakes Sold: <span id="cakeCount">0</span></div>
+        <div class="stat">Coins: <span id="coins">0</span></div>
+        <div class="stat">Time: <span id="timeOfDay">Day</span></div>
+        <div class="stat">Bakery Level: <span id="bakeryLevel">1</span></div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <div class="plot-twist-overlay" id="plotTwistOverlay">
+        <div class="plot-twist-content">
+            <h2>You were so busy baking...</h2>
+            <p>you never looked outside.</p>
+            <p style="margin-top: 20px; font-size: 16px;">Click to continue...</p>
+        </div>
+    </div>
+
+    <script>
+        class WoodshireBakery3D {
+            constructor() {
+                this.cakesSold = 0;
+                this.coins = 0;
+                this.bakeryLevel = 1;
+                this.isDay = true;
+                this.selectedIngredients = [];
+                this.isBaking = false;
+                this.currentCustomer = null;
+                this.customerPatience = 100;
+                this.plotTwistTriggered = false;
+                this.bakingSpeed = 2000;
+                this.ingredientMultiplier = 1;
+                this.chaosLevel = 0;
+                
+                this.bakeryScene = null;
+                this.villageScene = null;
+                this.bakeryCamera = null;
+                this.villageCamera = null;
+                this.bakeryRenderer = null;
+                this.villageRenderer = null;
+                
+                this.customer3D = null;
+                this.cakes3D = [];
+                this.villagers3D = [];
+                this.building3Ds = [];
+                
+                this.animalColors = [0xff6b35, 0x8b4513, 0x696969, 0xffd700, 0x4169e1, 0x32cd32];
+                
+                this.init();
+            }
+
+            init() {
+                this.setup3DEnvironments();
+                this.setupEventListeners();
+                this.startGameLoop();
+                this.spawnCustomer();
+                this.startDayNightCycle();
+                this.animate();
+            }
+
+            setup3DEnvironments() {
+                // Bakery Scene
+                this.bakeryScene = new THREE.Scene();
+                this.bakeryScene.background = new THREE.Color(0x8b6f47);
+                this.bakeryScene.fog = new THREE.Fog(0x8b6f47, 10, 50);
+
+                this.bakeryCamera = new THREE.PerspectiveCamera(75, (window.innerWidth * 0.6) / window.innerHeight, 0.1, 1000);
+                this.bakeryCamera.position.set(0, 5, 15);
+                this.bakeryCamera.lookAt(0, 0, 0);
+
+                this.bakeryRenderer = new THREE.WebGLRenderer({ 
+                    canvas: document.getElementById('bakery-canvas'),
+                    antialias: true 
+                });
+                this.bakeryRenderer.setSize(window.innerWidth * 0.6, window.innerHeight);
+                this.bakeryRenderer.shadowMap.enabled = true;
+                this.bakeryRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                // Village Scene
+                this.villageScene = new THREE.Scene();
+                this.villageScene.background = new THREE.Color(0x87ceeb);
+                this.villageScene.fog = new THREE.Fog(0x87ceeb, 20, 100);
+
+                this.villageCamera = new THREE.PerspectiveCamera(75, (window.innerWidth * 0.4) / window.innerHeight, 0.1, 1000);
+                this.villageCamera.position.set(0, 8, 25);
+                this.villageCamera.lookAt(0, 0, 0);
+
+                this.villageRenderer = new THREE.WebGLRenderer({ 
+                    canvas: document.getElementById('village-canvas'),
+                    antialias: true 
+                });
+                this.villageRenderer.setSize(window.innerWidth * 0.4, window.innerHeight);
+                this.villageRenderer.shadowMap.enabled = true;
+
+                this.createBakeryEnvironment();
+                this.createVillageEnvironment();
+                this.setupLighting();
+            }
+
+            createBakeryEnvironment() {
+                // Floor
+                const floorGeometry = new THREE.BoxGeometry(20, 0.5, 20);
+                const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x8b6f47 });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.position.y = -0.25;
+                floor.receiveShadow = true;
+                this.bakeryScene.add(floor);
+
+                // Walls
+                const wallMaterial = new THREE.MeshLambertMaterial({ color: 0xa0522d });
+                
+                // Back wall
+                const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 0.5), wallMaterial);
+                backWall.position.set(0, 4, -10);
+                backWall.receiveShadow = true;
+                this.bakeryScene.add(backWall);
+
+                // Side walls
+                const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 20), wallMaterial);
+                leftWall.position.set(-10, 4, 0);
+                leftWall.receiveShadow = true;
+                this.bakeryScene.add(leftWall);
+
+                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 20), wallMaterial);
+                rightWall.position.set(10, 4, 0);
+                rightWall.receiveShadow = true;
+                this.bakeryScene.add(rightWall);
+
+                // Counter
+                const counterGeometry = new THREE.BoxGeometry(8, 1, 2);
+                const counterMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+                const counter = new THREE.Mesh(counterGeometry, counterMaterial);
+                counter.position.set(0, 2, -5);
+                counter.castShadow = true;
+                counter.receiveShadow = true;
+                this.bakeryScene.add(counter);
+
+                // Oven
+                const ovenGeometry = new THREE.BoxGeometry(2, 3, 2);
+                const ovenMaterial = new THREE.MeshLambertMaterial({ color: 0x4a3c28 });
+                const oven = new THREE.Mesh(ovenGeometry, ovenMaterial);
+                oven.position.set(6, 1.5, -7);
+                oven.castShadow = true;
+                oven.receiveShadow = true;
+                this.bakeryScene.add(oven);
+
+                // Oven door
+                const ovenDoorGeometry = new THREE.BoxGeometry(1.8, 1.8, 0.1);
+                const ovenDoorMaterial = new THREE.MeshLambertMaterial({ color: 0x2a1810 });
+                const ovenDoor = new THREE.Mesh(ovenDoorGeometry, ovenDoorMaterial);
+                ovenDoor.position.set(6, 1.5, -6);
+                this.bakeryScene.add(ovenDoor);
+
+                // Ingredient shelves
+                for (let i = 0; i < 4; i++) {
+                    const shelfGeometry = new THREE.BoxGeometry(1.5, 0.1, 1);
+                    const shelfMaterial = new THREE.MeshLambertMaterial({ color: 0x8b6f47 });
+                    const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
+                    shelf.position.set(-8, 2 + i * 1.5, -7);
+                    shelf.castShadow = true;
+                    this.bakeryScene.add(shelf);
+                }
+
+                // Window
+                const windowFrame = new THREE.BoxGeometry(4, 3, 0.2);
+                const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x8b6f47 });
+                const window = new THREE.Mesh(windowFrame, windowMaterial);
+                window.position.set(0, 5, -9.8);
+                this.bakeryScene.add(window);
+
+                // Window glass
+                const glassGeometry = new THREE.BoxGeometry(3.5, 2.5, 0.1);
+                const glassMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x87ceeb, 
+                    transparent: true, 
+                    opacity: 0.3 
+                });
+                const glass = new THREE.Mesh(glassGeometry, glassMaterial);
+                glass.position.set(0, 5, -9.7);
+                this.bakeryScene.add(glass);
+            }
+
+            createVillageEnvironment() {
+                // Ground
+                const groundGeometry = new THREE.PlaneGeometry(100, 100);
+                const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90ee90 });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.villageScene.add(ground);
+
+                // Trees
+                for (let i = 0; i < 15; i++) {
+                    this.createTree(
+                        (Math.random() - 0.5) * 40,
+                        0,
+                        (Math.random() - 0.5) * 40
+                    );
+                }
+
+                // Buildings
+                for (let i = 0; i < 8; i++) {
+                    this.createBuilding(
+                        (Math.random() - 0.5) * 30,
+                        2,
+                        (Math.random() - 0.5) * 30
+                    );
+                }
+
+                // Path
+                const pathGeometry = new THREE.PlaneGeometry(5, 100);
+                const pathMaterial = new THREE.MeshLambertMaterial({ color: 0x8b7355 });
+                const path = new THREE.Mesh(pathGeometry, pathMaterial);
+                path.rotation.x = -Math.PI / 2;
+                path.position.y = 0.01;
+                path.receiveShadow = true;
+                this.villageScene.add(path);
+            }
+
+            createTree(x, y, z) {
+                const group = new THREE.Group();
+
+                // Trunk
+                const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.7, 4);
+                const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.y = 2;
+                trunk.castShadow = true;
+                group.add(trunk);
+
+                // Leaves
+                const leavesGeometry = new THREE.SphereGeometry(2, 8, 6);
+                const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                leaves.position.y = 5;
+                leaves.castShadow = true;
+                group.add(leaves);
+
+                group.position.set(x, y, z);
+                this.villageScene.add(group);
+            }
+
+            createBuilding(x, y, z) {
+                const group = new THREE.Group();
+
+                // Building base
+                const buildingGeometry = new THREE.BoxGeometry(4, 4, 4);
+                const buildingMaterial = new THREE.MeshLambertMaterial({ 
+                    color: new THREE.Color().setHSL(Math.random() * 0.1, 0.5, 0.5) 
+                });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                building.position.y = 2;
+                building.castShadow = true;
+                building.receiveShadow = true;
+                group.add(building);
+
+                // Roof
+                const roofGeometry = new THREE.ConeGeometry(3, 2, 4);
+                const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8b0000 });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = 5;
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                group.add(roof);
+
+                group.position.set(x, y, z);
+                this.building3Ds.push(group);
+                this.villageScene.add(group);
+            }
+
+            setupLighting() {
+                // Bakery lighting
+                const bakeryAmbient = new THREE.AmbientLight(0xffffff, 0.6);
+                this.bakeryScene.add(bakeryAmbient);
+
+                const bakeryPointLight = new THREE.PointLight(0xffd700, 1, 20);
+                bakeryPointLight.position.set(0, 6, 0);
+                bakeryPointLight.castShadow = true;
+                this.bakeryScene.add(bakeryPointLight);
+
+                // Village lighting
+                this.villageAmbient = new THREE.AmbientLight(0xffffff, 0.8);
+                this.villageScene.add(this.villageAmbient);
+
+                this.villageSunLight = new THREE.DirectionalLight(0xffffff, 1);
+                this.villageSunLight.position.set(10, 20, 10);
+                this.villageSunLight.castShadow = true;
+                this.villageSunLight.shadow.camera.left = -30;
+                this.villageSunLight.shadow.camera.right = 30;
+                this.villageSunLight.shadow.camera.top = 30;
+                this.villageSunLight.shadow.camera.bottom = -30;
+                this.villageScene.add(this.villageSunLight);
+            }
+
+            createCustomer3D() {
+                const group = new THREE.Group();
+                
+                // Body
+                const bodyGeometry = new THREE.CapsuleGeometry(0.5, 1.5);
+                const bodyMaterial = new THREE.MeshLambertMaterial({ 
+                    color: this.animalColors[Math.floor(Math.random() * this.animalColors.length)] 
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 1.25;
+                body.castShadow = true;
+                group.add(body);
+
+                // Head
+                const headGeometry = new THREE.SphereGeometry(0.4);
+                const headMaterial = new THREE.MeshLambertMaterial({ color: bodyMaterial.color });
+                const head = new THREE.Mesh(headGeometry, headMaterial);
+                head.position.y = 2.5;
+                head.castShadow = true;
+                group.add(head);
+
+                // Eyes
+                const eyeGeometry = new THREE.SphereGeometry(0.05);
+                const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                
+                const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+                leftEye.position.set(-0.15, 2.5, 0.35);
+                group.add(leftEye);
+                
+                const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+                rightEye.position.set(0.15, 2.5, 0.35);
+                group.add(rightEye);
+
+                group.position.set(0, 0, -3);
+                this.customer3D = group;
+                this.bakeryScene.add(group);
+            }
+
+            createVillager3D() {
+                const group = new THREE.Group();
+                
+                // Body
+                const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1);
+                const bodyMaterial = new THREE.MeshLambertMaterial({ 
+                    color: this.animalColors[Math.floor(Math.random() * this.animalColors.length)] 
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.8;
+                body.castShadow = true;
+                group.add(body);
+
+                // Head
+                const headGeometry = new THREE.SphereGeometry(0.25);
+                const headMaterial = new THREE.MeshLambertMaterial({ color: bodyMaterial.color });
+                const head = new THREE.Mesh(headGeometry, headMaterial);
+                head.position.y = 1.6;
+                head.castShadow = true;
+                group.add(head);
+
+                const x = (Math.random() - 0.5) * 20;
+                const z = (Math.random() - 0.5) * 20;
+                group.position.set(x, 0, z);
+                
+                this.villagers3D.push({
+                    mesh: group,
+                    originalPosition: { x, z },
+                    moveDirection: { x: (Math.random() - 0.5) * 0.02, z: (Math.random() - 0.5) * 0.02 }
+                });
+                
+                this.villageScene.add(group);
+            }
+
+            createCake3D() {
+                const group = new THREE.Group();
+                
+                // Cake base
+                const cakeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.3);
+                const cakeMaterial = new THREE.MeshLambertMaterial({ color: 0xffeb3b });
+                const cake = new THREE.Mesh(cakeGeometry, cakeMaterial);
+                cake.position.y = 0.15;
+                cake.castShadow = true;
+                group.add(cake);
+
+                // Frosting
+                const frostingGeometry = new THREE.CylinderGeometry(0.55, 0.55, 0.1);
+                const frostingMaterial = new THREE.MeshLambertMaterial({ color: 0xff69b4 });
+                const frosting = new THREE.Mesh(frostingGeometry, frostingMaterial);
+                frosting.position.y = 0.35;
+                frosting.castShadow = true;
+                group.add(frosting);
+
+                // Cherry on top
+                const cherryGeometry = new THREE.SphereGeometry(0.1);
+                const cherryMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+                const cherry = new THREE.Mesh(cherryGeometry, cherryMaterial);
+                cherry.position.y = 0.45;
+                cherry.castShadow = true;
+                group.add(cherry);
+
+                group.position.set(
+                    (Math.random() - 0.5) * 6,
+                    2.5,
+                    -5
+                );
+                
+                this.cakes3D.push(group);
+                this.bakeryScene.add(group);
+            }
+
+            setupEventListeners() {
+                // Ingredient selection
+                document.querySelectorAll('.ingredient-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.selectIngredient(e.target.dataset.ingredient, e.target);
+                    });
+                });
+
+                // Bake button
+                document.getElementById('bakeBtn').addEventListener('click', () => {
+                    this.bakeCake();
+                });
+
+                // Upgrade button
+                document.getElementById('upgradeBtn').addEventListener('click', () => {
+                    this.upgradeBakery();
+                });
+
+                // Plot twist overlay
+                document.getElementById('plotTwistOverlay').addEventListener('click', () => {
+                    this.closePlotTwist();
+                });
+
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.bakeryCamera.aspect = (window.innerWidth * 0.6) / window.innerHeight;
+                    this.bakeryCamera.updateProjectionMatrix();
+                    this.bakeryRenderer.setSize(window.innerWidth * 0.6, window.innerHeight);
+
+                    this.villageCamera.aspect = (window.innerWidth * 0.4) / window.innerHeight;
+                    this.villageCamera.updateProjectionMatrix();
+                    this.villageRenderer.setSize(window.innerWidth * 0.4, window.innerHeight);
+                });
+            }
+
+            selectIngredient(type, element) {
+                if (this.selectedIngredients.length < 2 * this.ingredientMultiplier) {
+                    this.selectedIngredients.push(type);
+                    element.classList.add('selected');
+                    
+                    if (this.selectedIngredients.length >= 2 * this.ingredientMultiplier) {
+                        this.showNotification('Ready to bake!');
+                        document.getElementById('bakeBtn').disabled = false;
+                    }
+                }
+            }
+
+            bakeCake() {
+                if (this.isBaking) return;
+                if (this.selectedIngredients.length < 2 * this.ingredientMultiplier) {
+                    this.showNotification('Need more ingredients!');
+                    return;
+                }
+
+                this.isBaking = true;
+                const bakeBtn = document.getElementById('bakeBtn');
+                bakeBtn.disabled = true;
+                bakeBtn.textContent = 'BAKING...';
+
+                setTimeout(() => {
+                    this.createCake3D();
+                    this.isBaking = false;
+                    this.selectedIngredients = [];
+                    document.querySelectorAll('.ingredient-btn').forEach(btn => btn.classList.remove('selected'));
+                    bakeBtn.textContent = 'BAKE CAKE';
+                    this.showNotification('Cake ready! Click to serve.');
+                }, this.bakingSpeed);
+            }
+
+            serveCake() {
+                if (!this.currentCustomer || this.cakes3D.length === 0) return;
+
+                const satisfaction = this.isDay ? 0.8 : 0.5;
+                const tip = Math.random() < satisfaction ? 3 : 1;
+                
+                this.coins += 2 + tip;
+                this.cakesSold++;
+                
+                // Remove cake
+                const cake = this.cakes3D.pop();
+                this.bakeryScene.remove(cake);
+                
+                // Customer happy animation
+                if (this.customer3D) {
+                    this.animateCustomerHappy();
+                }
+                
+                setTimeout(() => {
+                    this.spawnCustomer();
+                }, 1000);
+
+                this.updateUI();
+                this.checkPlotTwist();
+                this.increaseChaos();
+            }
+
+            animateCustomerHappy() {
+                if (!this.customer3D) return;
+                
+                const originalY = this.customer3D.position.y;
+                let time = 0;
+                const bounce = setInterval(() => {
+                    time += 0.1;
+                    this.customer3D.position.y = originalY + Math.sin(time * 10) * 0.3;
+                    
+                    if (time > 0.5) {
+                        clearInterval(bounce);
+                        this.customer3D.position.y = originalY;
+                    }
+                }, 50);
+            }
+
+            spawnCustomer() {
+                if (this.customer3D) {
+                    this.bakeryScene.remove(this.customer3D);
+                }
+                this.createCustomer3D();
+                this.customerPatience = this.isDay ? 150 : 100;
+            }
+
+            spawnVillagers() {
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => {
+                        this.createVillager3D();
+                    }, i * 200);
+                }
+            }
+
+            increaseChaos() {
+                if (this.cakesSold > 100) {
+                    this.chaosLevel = 1;
+                }
+                if (this.cakesSold > 300) {
+                    this.chaosLevel = 2;
+                }
+                if (this.cakesSold > 500) {
+                    this.chaosLevel = 3;
+                }
+                if (this.cakesSold > 800) {
+                    this.chaosLevel = 4;
+                }
+            }
+
+            checkPlotTwist() {
+                if (this.cakesSold >= 1000 && !this.plotTwistTriggered) {
+                    this.triggerPlotTwist();
+                }
+            }
+
+            triggerPlotTwist() {
+                this.plotTwistTriggered = true;
+                this.chaosLevel = 10;
+                
+                const overlay = document.getElementById('plotTwistOverlay');
+                overlay.classList.add('active');
+                
+                // Camera zoom out effect
+                const targetCameraZ = 50;
+                const zoomOut = setInterval(() => {
+                    this.villageCamera.position.z += 1;
+                    this.villageCamera.position.y += 0.5;
+                    
+                    if (this.villageCamera.position.z >= targetCameraZ) {
+                        clearInterval(zoomOut);
+                    }
+                }, 50);
+            }
+
+            closePlotTwist() {
+                const overlay = document.getElementById('plotTwistOverlay');
+                overlay.classList.remove('active');
+            }
+
+            upgradeBakery() {
+                const upgradeCost = this.bakeryLevel * 10;
+                if (this.coins >= upgradeCost) {
+                    this.coins -= upgradeCost;
+                    this.bakeryLevel++;
+                    
+                    this.bakingSpeed = Math.max(1000, this.bakingSpeed - 200);
+                    if (this.bakeryLevel % 2 === 0) {
+                        this.ingredientMultiplier++;
+                    }
+                    
+                    this.updateUI();
+                    this.showNotification(`Bakery upgraded to level ${this.bakeryLevel}!`);
+                }
+            }
+
+            startDayNightCycle() {
+                setInterval(() => {
+                    this.isDay = !this.isDay;
+                    
+                    if (this.isDay) {
+                        this.villageScene.background = new THREE.Color(0x87ceeb);
+                        this.villageAmbient.intensity = 0.8;
+                        this.villageSunLight.intensity = 1;
+                        this.villageSunLight.color = new THREE.Color(0xffffff);
+                    } else {
+                        this.villageScene.background = new THREE.Color(0x1a1a2e);
+                        this.villageAmbient.intensity = 0.3;
+                        this.villageSunLight.intensity = 0.5;
+                        this.villageSunLight.color = new THREE.Color(0x4169e1);
+                    }
+                    
+                    this.updateUI();
+                }, 30000);
+            }
+
+            startGameLoop() {
+                setInterval(() => {
+                    if (this.currentCustomer && this.customerPatience > 0) {
+                        this.customerPatience--;
+                        if (this.customerPatience === 0) {
+                            this.spawnCustomer();
+                        }
+                    }
+                }, 100);
+            }
+
+            animateVillagers() {
+                this.villagers3D.forEach(villager => {
+                    // Basic movement
+                    villager.mesh.position.x += villager.moveDirection.x;
+                    villager.mesh.position.z += villager.moveDirection.z;
+                    
+                    // Boundary check and direction change
+                    if (Math.abs(villager.mesh.position.x) > 15) {
+                        villager.moveDirection.x *= -1;
+                    }
+                    if (Math.abs(villager.mesh.position.z) > 15) {
+                        villager.moveDirection.z *= -1;
+                    }
+                    
+                    // Chaos effects
+                    if (this.chaosLevel > 1) {
+                        villager.mesh.position.y = Math.sin(Date.now() * 0.001 + villager.originalPosition.x) * this.chaosLevel * 0.1;
+                    }
+                    
+                    if (this.chaosLevel > 2) {
+                        villager.mesh.rotation.y += 0.02 * this.chaosLevel;
+                    }
+                    
+                    if (this.chaosLevel > 3 && Math.random() < 0.001 * this.chaosLevel) {
+                        villager.moveDirection.x = (Math.random() - 0.5) * 0.05 * this.chaosLevel;
+                        villager.moveDirection.z = (Math.random() - 0.5) * 0.05 * this.chaosLevel;
+                    }
+                });
+            }
+
+            updateUI() {
+                document.getElementById('cakeCount').textContent = this.cakesSold;
+                document.getElementById('coins').textContent = this.coins;
+                document.getElementById('timeOfDay').textContent = this.isDay ? 'Day' : 'Night';
+                document.getElementById('bakeryLevel').textContent = this.bakeryLevel;
+                
+                const upgradeBtn = document.getElementById('upgradeBtn');
+                const upgradeCost = this.bakeryLevel * 10;
+                upgradeBtn.textContent = `Upgrade (${upgradeCost} coins)`;
+                upgradeBtn.disabled = this.coins < upgradeCost;
+            }
+
+            showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Animate villagers
+                this.animateVillagers();
+                
+                // Check for cake serving (raycasting)
+                if (this.cakes3D.length > 0 && this.customer3D) {
+                    // Simple proximity check for serving
+                    const cake = this.cakes3D[0];
+                    const distance = cake.position.distanceTo(this.customer3D.position);
+                    
+                    if (distance < 2) {
+                        this.serveCake();
+                    }
+                }
+                
+                // Render scenes
+                this.bakeryRenderer.render(this.bakeryScene, this.bakeryCamera);
+                this.villageRenderer.render(this.villageScene, this.villageCamera);
+            }
+        }
+
+        // Start the game
+        const game = new WoodshireBakery3D();
+        game.spawnVillagers();
+    </script>
+</body>
+</html>

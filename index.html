@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Change Education - Understanding Our Planet's Crisis</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">🌍 Climate Education</div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#causes" class="nav-link">Causes</a></li>
+                <li><a href="#effects" class="nav-link">Effects</a></li>
+                <li><a href="#solutions" class="nav-link">Solutions</a></li>
+                <li><a href="#survey" class="nav-link">Survey</a></li>
+                <li><a href="#action" class="nav-link">Take Action</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Understanding Climate Change</h1>
+            <p class="hero-subtitle">The scientific facts, real-world impacts, and actionable solutions for our planet's future</p>
+            <div class="hero-buttons">
+                <a href="#causes" class="btn btn-primary">Learn the Causes</a>
+                <a href="#action" class="btn btn-secondary">Take Action Now</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="earth-animation">🌍</div>
+        </div>
+    </section>
+
+    <!-- Causes Section -->
+    <section id="causes" class="section">
+        <div class="container">
+            <h2 class="section-title">What Causes Climate Change?</h2>
+            <p class="section-subtitle">The scientific drivers behind our warming planet</p>
+            
+            <div class="causes-grid">
+                <div class="cause-card">
+                    <div class="cause-icon">🏭</div>
+                    <h3>Fossil Fuels</h3>
+                    <p>Burning coal, oil, and gas releases CO₂ that traps heat in our atmosphere. This accounts for 76% of global greenhouse gas emissions.</p>
+                    <div class="data-point">+1.1°C global warming since pre-industrial times</div>
+                </div>
+                
+                <div class="cause-card">
+                    <div class="cause-icon">🌳</div>
+                    <h3>Deforestation</h3>
+                    <p>Trees absorb CO₂, but we're losing 10 million hectares of forest annually. This reduces Earth's capacity to regulate carbon.</p>
+                    <div class="data-point">15% of global emissions from deforestation</div>
+                </div>
+                
+                <div class="cause-card">
+                    <div class="cause-icon">�</div>
+                    <h3>Agriculture</h3>
+                    <p>Livestock produces methane, a potent greenhouse gas. Modern farming practices also release significant CO₂ emissions.</p>
+                    <div class="data-point">24% of global emissions from agriculture</div>
+                </div>
+                
+                <div class="cause-card">
+                    <div class="cause-icon">🏙️</div>
+                    <h3>Industrial Processes</h3>
+                    <p>Manufacturing, construction, and chemical production release various greenhouse gases beyond CO₂.</p>
+                    <div class="data-point">21% of global emissions from industry</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Global Emissions by Source</h3>
+                <canvas id="emissionsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Effects Section -->
+    <section id="effects" class="section section-dark">
+        <div class="container">
+            <h2 class="section-title">Real-World Effects</h2>
+            <p class="section-subtitle">How climate change impacts our lives and ecosystems</p>
+            
+            <div class="effects-timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">Now</div>
+                    <div class="timeline-content">
+                        <h4>Extreme Weather</h4>
+                        <p>More frequent hurricanes, wildfires, droughts, and floods. 2023 saw 28 climate-related disasters costing over $1 billion each.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2030</div>
+                    <div class="timeline-content">
+                        <h4>Sea Level Rise</h4>
+                        <p>Ocean levels rising 3.3mm per year. Coastal cities like Miami and Venice face increased flooding and infrastructure damage.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2050</div>
+                    <div class="timeline-content">
+                        <h4>Food Security</h4>
+                        <p>Crop yields could decline 20% globally. 200 million people may face food insecurity due to climate impacts.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2100</div>
+                    <div class="timeline-content">
+                        <h4>Tipping Points</h4>
+                        <p>Potential irreversible changes including Amazon rainforest collapse and Arctic permafrost methane release.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solutions Section -->
+    <section id="solutions" class="section">
+        <div class="container">
+            <h2 class="section-title">Solutions That Work</h2>
+            <p class="section-subtitle">Personal actions and policy changes that make a difference</p>
+            
+            <div class="solutions-grid">
+                <div class="solution-category">
+                    <h3>🏠 Personal Actions</h3>
+                    <ul class="solution-list">
+                        <li>Reduce energy consumption at home (30% of emissions)</li>
+                        <li>Choose sustainable transportation options</li>
+                        <li>Adopt plant-rich diet (reduces emissions by 73%)</li>
+                        <li>Support renewable energy providers</li>
+                        <li>Reduce, reuse, and recycle waste</li>
+                    </ul>
+                </div>
+                
+                <div class="solution-category">
+                    <h3>🏛️ Policy Solutions</h3>
+                    <ul class="solution-list">
+                        <li>Carbon pricing and emissions trading</li>
+                        <li>Investment in renewable infrastructure</li>
+                        <li>Protected areas and reforestation programs</li>
+                        <li>Climate education in schools</li>
+                        <li>International climate agreements</li>
+                    </ul>
+                </div>
+                
+                <div class="solution-category">
+                    <h3>🔬 Technological Solutions</h3>
+                    <ul class="solution-list">
+                        <li>Solar and wind energy expansion</li>
+                        <li>Energy storage and grid modernization</li>
+                        <li>Carbon capture and storage</li>
+                        <li>Sustainable agriculture practices</li>
+                        <li>Green hydrogen development</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section id="videos" class="section section-dark">
+        <div class="container">
+            <h2 class="section-title">Learn from the Experts</h2>
+            <p class="section-subtitle">Educational videos from Hank Green and climate scientists</p>
+            
+            <div class="video-grid">
+                <div class="video-card">
+                    <div class="video-placeholder">
+                        <iframe src="https://www.youtube.com/embed/dRpAxKg8W0s" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <h4>Climate Change Explained</h4>
+                    <p>Hank Green breaks down the science of climate change in 10 minutes</p>
+                </div>
+                
+                <div class="video-card">
+                    <div class="video-placeholder">
+                        <iframe src="https://www.youtube.com/embed/SiV5t2yETKs" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <h4>Solutions to Climate Change</h4>
+                    <p>Exploring the most effective solutions we can implement today</p>
+                </div>
+                
+                <div class="video-card">
+                    <div class="video-placeholder">
+                        <iframe src="https://www.youtube.com/embed/aX2GKJy2www" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <h4>Climate Science Basics</h4>
+                    <p>Understanding the greenhouse effect and global warming</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Survey Section -->
+    <section id="survey" class="section">
+        <div class="container">
+            <h2 class="section-title">Climate Knowledge Survey</h2>
+            <p class="section-subtitle">Test your understanding and get personalized recommendations</p>
+            
+            <div class="survey-container">
+                <form id="climateSurvey">
+                    <div class="question-group">
+                        <h3>Question 1: What is the primary cause of current climate change?</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q1" value="natural"> Natural climate cycles</label>
+                            <label><input type="radio" name="q1" value="human"> Human greenhouse gas emissions</label>
+                            <label><input type="radio" name="q1" value="solar"> Increased solar activity</label>
+                            <label><input type="radio" name="q1" value="volcanic"> Volcanic eruptions</label>
+                        </div>
+                    </div>
+                    
+                    <div class="question-group">
+                        <h3>Question 2: Which sector contributes most to global emissions?</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q2" value="transport"> Transportation</label>
+                            <label><input type="radio" name="q2" value="agriculture"> Agriculture</label>
+                            <label><input type="radio" name="q2" value="energy"> Energy production</label>
+                            <label><input type="radio" name="q2" value="industry"> Manufacturing</label>
+                        </div>
+                    </div>
+                    
+                    <div class="question-group">
+                        <h3>Question 3: What personal action has the biggest impact?</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q3" value="recycle"> Recycling</label>
+                            <label><input type="radio" name="q3" value="diet"> Changing diet</label>
+                            <label><input type="radio" name="q3" value="lights"> Turning off lights</label>
+                            <label><input type="radio" name="q3" value="water"> Saving water</label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Submit Survey</button>
+                </form>
+                
+                <div id="surveyResults" class="survey-results" style="display: none;">
+                    <h3>Your Results</h3>
+                    <div id="resultsContent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section id="action" class="cta-section">
+        <div class="container">
+            <h2 class="section-title">Take Action Today</h2>
+            <p class="section-subtitle">Your choices matter. Here's how you can make a difference right now.</p>
+            
+            <div class="action-grid">
+                <div class="action-card">
+                    <h3>📱 Immediate Actions</h3>
+                    <ul>
+                        <li>Calculate your carbon footprint</li>
+                        <li>Switch to renewable energy provider</li>
+                        <li>Reduce meat consumption this week</li>
+                        <li>Join local climate action group</li>
+                    </ul>
+                    <button class="btn btn-secondary" onclick="showActionDetails('immediate')">Start Now</button>
+                </div>
+                
+                <div class="action-card">
+                    <h3>🏛️ Political Action</h3>
+                    <ul>
+                        <li>Contact your representatives</li>
+                        <li>Vote for climate-forward policies</li>
+                        <li>Support environmental organizations</li>
+                        <li>Share climate science with others</li>
+                    </ul>
+                    <button class="btn btn-secondary" onclick="showActionDetails('political')">Get Involved</button>
+                </div>
+                
+                <div class="action-card">
+                    <h3>🌍 Community Impact</h3>
+                    <ul>
+                        <li>Organize local cleanup events</li>
+                        <li>Start community garden</li>
+                        <li>Advocate for bike lanes</li>
+                        <li>Teach others about climate solutions</li>
+                    </ul>
+                    <button class="btn btn-secondary" onclick="showActionDetails('community')">Lead Change</button>
+                </div>
+            </div>
+            
+            <div class="pledge-section">
+                <h3>Make the Climate Pledge</h3>
+                <p>Commit to taking meaningful action for our planet's future</p>
+                <button class="btn btn-primary btn-large" onclick="showPledgeForm()">Take the Pledge</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Learn More</h4>
+                    <ul>
+                        <li><a href="#causes">Climate Science</a></li>
+                        <li><a href="#effects">Impacts</a></li>
+                        <li><a href="#solutions">Solutions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://climate.nasa.gov/">NASA Climate</a></li>
+                        <li><a href="https://www.ipcc.ch/">IPCC Reports</a></li>
+                        <li><a href="https://www.youtube.com/c/vlogbrothers">Hank Green</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <ul>
+                        <li><a href="#survey">Take Survey</a></li>
+                        <li><a href="#action">Take Action</a></li>
+                        <li><a href="#videos">Watch Videos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Climate Education Website. Empowering informed climate action.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woodshire Bakery 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #2a1810;
+            overflow: hidden;
+            user-select: none;
+            perspective: 1000px;
+        }
+
+        .game-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .bakery {
+            width: 60%;
+            position: relative;
+            border-right: 8px solid #4a3c28;
+            background: linear-gradient(135deg, #8b6f47 0%, #6b5637 100%);
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .village {
+            width: 40%;
+            position: relative;
+            transition: background 2s ease;
+            transform-style: preserve-3d;
+        }
+
+        .village.day {
+            background: linear-gradient(to bottom, #87ceeb 0%, #98d8e8 50%, #b8e6b8 100%);
+        }
+
+        .village.night {
+            background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        .bakery-sign {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #d4a574;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 3px solid #8b6f47;
+            font-weight: bold;
+            font-size: 18px;
+            color: #3a2a1a;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        /* 3D Bakery Environment */
+        .bakery-3d {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: rotateX(5deg);
+        }
+
+        .floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(90deg, #8b6f47 0%, #a0522d 50%, #8b6f47 100%);
+            transform: rotateX(90deg) translateZ(-100px);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .wall-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(180deg, #a0522d 0%, #8b4513 100%);
+            transform: translateZ(-200px);
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.3);
+        }
+
+        .wall-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 60%;
+            background: linear-gradient(90deg, #8b4513 0%, #a0522d 100%);
+            transform: rotateY(90deg) translateZ(-100px);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.3);
+        }
+
+        .wall-right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 60%;
+            background: linear-gradient(90deg, #a0522d 0%, #8b4513 100%);
+            transform: rotateY(-90deg) translateZ(-100px);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.3);
+        }
+
+        .counter-3d {
+            position: absolute;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(-50px);
+            width: 300px;
+            height: 80px;
+            background: linear-gradient(180deg, #654321 0%, #8b4513 100%);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .oven-3d {
+            position: absolute;
+            bottom: 200px;
+            right: 100px;
+            width: 120px;
+            height: 150px;
+            background: linear-gradient(180deg, #4a3c28 0%, #2a1810 100%);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateZ(-30px);
+            transition: all 0.3s;
+        }
+
+        .oven-3d:hover {
+            transform: translateZ(-30px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+        }
+
+        .oven-3d.baking {
+            animation: bake-glow 2s ease-in-out;
+        }
+
+        @keyframes bake-glow {
+            0%, 100% { 
+                background: linear-gradient(180deg, #4a3c28 0%, #2a1810 100%);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            }
+            50% { 
+                background: linear-gradient(180deg, #ff6b6b 0%, #ff4444 100%);
+                box-shadow: 0 10px 50px rgba(255, 107, 107, 0.8);
+            }
+        }
+
+        .window-3d {
+            position: absolute;
+            top: 100px;
+            right: 50px;
+            width: 150px;
+            height: 120px;
+            background: linear-gradient(135deg, #87ceeb 0%, #98d8e8 100%);
+            border: 8px solid #8b6f47;
+            border-radius: 10px;
+            transform: translateZ(-10px);
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.3);
+        }
+
+        .shelf-3d {
+            position: absolute;
+            left: 50px;
+            width: 100px;
+            height: 10px;
+            background: linear-gradient(90deg, #8b6f47 0%, #a0522d 100%);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .shelf-3d:nth-child(1) { top: 150px; transform: translateZ(-20px); }
+        .shelf-3d:nth-child(2) { top: 200px; transform: translateZ(-20px); }
+        .shelf-3d:nth-child(3) { top: 250px; transform: translateZ(-20px); }
+        .shelf-3d:nth-child(4) { top: 300px; transform: translateZ(-20px); }
+
+        /* 3D Village Environment */
+        .village-3d {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: rotateX(10deg);
+        }
+
+        .ground-3d {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(90deg, #90ee90 0%, #98d898 50%, #90ee90 100%);
+            transform: rotateX(90deg) translateZ(-150px);
+            box-shadow: 0 0 100px rgba(0,0,0,0.3);
+        }
+
+        .tree-3d {
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: all 0.5s;
+        }
+
+        .tree-trunk {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 60px;
+            background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .tree-leaves {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #228b22 0%, #32cd32 100%);
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .building-3d {
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: all 0.5s;
+        }
+
+        .building-base {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(180deg, #cd853f 0%, #8b4513 100%);
+            border-radius: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .building-roof {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 30px solid #8b0000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .path-3d {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) rotateX(90deg) translateZ(-149px);
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(90deg, #8b7355 0%, #a0826d 50%, #8b7355 100%);
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        /* 3D Characters */
+        .customer-3d {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 100px;
+            transform-style: preserve-3d;
+            transition: all 0.3s;
+        }
+
+        .customer-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 60px;
+            background: linear-gradient(180deg, #ff6b35 0%, #d2691e 100%);
+            border-radius: 25px 25px 10px 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .customer-head {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(180deg, #ff8c69 0%, #ff6b35 100%);
+            border-radius: 50%;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+        }
+
+        .customer-eye {
+            position: absolute;
+            top: 15px;
+            width: 8px;
+            height: 8px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .customer-eye.left { left: 10px; }
+        .customer-eye.right { right: 10px; }
+
+        .customer-3d.happy {
+            animation: bounce-3d 0.5s ease;
+        }
+
+        @keyframes bounce-3d {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .villager-3d {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            transform-style: preserve-3d;
+            transition: all 0.5s;
+        }
+
+        .villager-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 40px;
+            background: linear-gradient(180deg, #4169e1 0%, #1e3a8a 100%);
+            border-radius: 15px 15px 5px 5px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+        }
+
+        .villager-head {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(180deg, #6495ed 0%, #4169e1 100%);
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .villager-3d.chaotic {
+            animation: float-3d 3s ease-in-out infinite;
+        }
+
+        @keyframes float-3d {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .villager-3d.dancing {
+            animation: dance-3d 1s ease-in-out infinite;
+        }
+
+        @keyframes dance-3d {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+
+        .cake-3d {
+            position: absolute;
+            width: 60px;
+            height: 40px;
+            transform-style: preserve-3d;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .cake-base {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 20px;
+            background: linear-gradient(180deg, #ffeb3b 0%, #f9a825 100%);
+            border-radius: 25px 25px 5px 5px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+        }
+
+        .cake-frosting {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55px;
+            height: 10px;
+            background: linear-gradient(180deg, #ff69b4 0%, #ff1493 100%);
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .cake-cherry {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #ff0000 0%, #8b0000 100%);
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .cake-3d:hover {
+            transform: scale(1.1) rotateY(10deg);
+        }
+
+        /* UI Elements */
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 200;
+        }
+
+        .stat {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .ingredients-panel {
+            position: absolute;
+            top: 150px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+
+        .ingredient-btn {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            background: #d4a574;
+            border: 3px solid #8b6f47;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 24px;
+            text-align: center;
+            line-height: 54px;
+        }
+
+        .ingredient-btn:hover {
+            transform: scale(1.1);
+            background: #e4b584;
+        }
+
+        .ingredient-btn.selected {
+            background: #ff6b6b;
+            transform: scale(1.15);
+        }
+
+        .bake-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .bake-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .bake-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .upgrade-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .upgrade-btn:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .upgrade-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .plot-twist-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .plot-twist-overlay.active {
+            display: flex;
+        }
+
+        .plot-twist-content {
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            max-width: 600px;
+            animation: fadeIn 2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            z-index: 300;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="bakery">
+            <div class="bakery-sign">Woodshire Bakery</div>
+            <div class="bakery-3d">
+                <div class="floor"></div>
+                <div class="wall-back"></div>
+                <div class="wall-left"></div>
+                <div class="wall-right"></div>
+                <div class="counter-3d" id="counter"></div>
+                <div class="oven-3d" id="oven"></div>
+                <div class="window-3d"></div>
+                <div class="shelf-3d"></div>
+                <div class="shelf-3d"></div>
+                <div class="shelf-3d"></div>
+                <div class="shelf-3d"></div>
+                <div class="customer-3d" id="customer">
+                    <div class="customer-body"></div>
+                    <div class="customer-head">
+                        <div class="customer-eye left"></div>
+                        <div class="customer-eye right"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ingredients-panel">
+                <div class="ingredient-btn" data-ingredient="flour">🌾</div>
+                <div class="ingredient-btn" data-ingredient="sugar">🍚</div>
+                <div class="ingredient-btn" data-ingredient="eggs">🥚</div>
+                <div class="ingredient-btn" data-ingredient="milk">🥛</div>
+            </div>
+            <button class="bake-btn" id="bakeBtn" disabled>BAKE CAKE</button>
+            <button class="upgrade-btn" id="upgradeBtn">Upgrade (10 coins)</button>
+        </div>
+        <div class="village day" id="village">
+            <div class="village-3d">
+                <div class="ground-3d"></div>
+                <div class="path-3d"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui">
+        <div class="stat">Cakes Sold: <span id="cakeCount">0</span></div>
+        <div class="stat">Coins: <span id="coins">0</span></div>
+        <div class="stat">Time: <span id="timeOfDay">Day</span></div>
+        <div class="stat">Bakery Level: <span id="bakeryLevel">1</span></div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <div class="plot-twist-overlay" id="plotTwistOverlay">
+        <div class="plot-twist-content">
+            <h2>You were so busy baking...</h2>
+            <p>you never looked outside.</p>
+            <p style="margin-top: 20px; font-size: 16px;">Click to continue...</p>
+        </div>
+    </div>
+
+    <script>
+        class WoodshireBakeryCSS3D {
+            constructor() {
+                this.cakesSold = 0;
+                this.coins = 0;
+                this.bakeryLevel = 1;
+                this.isDay = true;
+                this.selectedIngredients = [];
+                this.isBaking = false;
+                this.currentCustomer = null;
+                this.customerPatience = 100;
+                this.plotTwistTriggered = false;
+                this.bakingSpeed = 2000;
+                this.ingredientMultiplier = 1;
+                this.chaosLevel = 0;
+                
+                this.cakes3D = [];
+                this.villagers3D = [];
+                this.building3Ds = [];
+                
+                this.animalColors = ['#ff6b35', '#8b4513', '#696969', '#ffd700', '#4169e1', '#32cd32'];
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.createVillageEnvironment();
+                this.startGameLoop();
+                this.spawnCustomer();
+                this.startDayNightCycle();
+                this.spawnVillagers();
+            }
+
+            createVillageEnvironment() {
+                const village3D = document.querySelector('.village-3d');
+                
+                // Create trees
+                for (let i = 0; i < 8; i++) {
+                    const tree = this.createTree3D();
+                    const x = Math.random() * 80 + 10;
+                    const z = Math.random() * 60 + 20;
+                    tree.style.left = x + '%';
+                    tree.style.bottom = z + 'px';
+                    village3D.appendChild(tree);
+                }
+                
+                // Create buildings
+                for (let i = 0; i < 6; i++) {
+                    const building = this.createBuilding3D();
+                    const x = Math.random() * 70 + 15;
+                    const z = Math.random() * 50 + 25;
+                    building.style.left = x + '%';
+                    building.style.bottom = z + 'px';
+                    village3D.appendChild(building);
+                    this.building3Ds.push(building);
+                }
+            }
+
+            createTree3D() {
+                const tree = document.createElement('div');
+                tree.className = 'tree-3d';
+                tree.innerHTML = `
+                    <div class="tree-trunk"></div>
+                    <div class="tree-leaves"></div>
+                `;
+                return tree;
+            }
+
+            createBuilding3D() {
+                const building = document.createElement('div');
+                building.className = 'building-3d';
+                const color = this.animalColors[Math.floor(Math.random() * this.animalColors.length)];
+                building.innerHTML = `
+                    <div class="building-base" style="background: linear-gradient(180deg, ${color} 0%, ${this.darkenColor(color)} 100%);"></div>
+                    <div class="building-roof"></div>
+                `;
+                return building;
+            }
+
+            darkenColor(color) {
+                // Simple color darkening
+                const colors = {
+                    '#ff6b35': '#d2691e',
+                    '#8b4513': '#654321',
+                    '#696969': '#4a4a4a',
+                    '#ffd700': '#daa520',
+                    '#4169e1': '#1e3a8a',
+                    '#32cd32': '#228b22'
+                };
+                return colors[color] || color;
+            }
+
+            createVillager3D() {
+                const villager = document.createElement('div');
+                villager.className = 'villager-3d';
+                const color = this.animalColors[Math.floor(Math.random() * this.animalColors.length)];
+                villager.innerHTML = `
+                    <div class="villager-body" style="background: linear-gradient(180deg, ${color} 0%, ${this.darkenColor(color)} 100%);"></div>
+                    <div class="villager-head" style="background: linear-gradient(180deg, ${color} 0%, ${this.darkenColor(color)} 100%);"></div>
+                `;
+                
+                const x = Math.random() * 80 + 10;
+                const z = Math.random() * 40 + 10;
+                villager.style.left = x + '%';
+                villager.style.bottom = z + 'px';
+                
+                this.villagers3D.push({
+                    element: villager,
+                    originalPosition: { x, z },
+                    moveDirection: { x: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 2 }
+                });
+                
+                document.querySelector('.village-3d').appendChild(villager);
+                this.animateVillager(villager);
+            }
+
+            createCake3D() {
+                const cake = document.createElement('div');
+                cake.className = 'cake-3d';
+                cake.innerHTML = `
+                    <div class="cake-base"></div>
+                    <div class="cake-frosting"></div>
+                    <div class="cake-cherry"></div>
+                `;
+                
+                const counter = document.getElementById('counter');
+                const x = Math.random() * 200 + 50;
+                const z = Math.random() * 40 + 20;
+                cake.style.left = x + 'px';
+                cake.style.bottom = z + 'px';
+                
+                cake.addEventListener('click', () => {
+                    this.serveCake(cake);
+                });
+
+                counter.appendChild(cake);
+                this.cakes3D.push(cake);
+            }
+
+            setupEventListeners() {
+                // Ingredient selection
+                document.querySelectorAll('.ingredient-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.selectIngredient(e.target.dataset.ingredient, e.target);
+                    });
+                });
+
+                // Bake button
+                document.getElementById('bakeBtn').addEventListener('click', () => {
+                    this.bakeCake();
+                });
+
+                // Oven click
+                document.getElementById('oven').addEventListener('click', () => {
+                    this.bakeCake();
+                });
+
+                // Upgrade button
+                document.getElementById('upgradeBtn').addEventListener('click', () => {
+                    this.upgradeBakery();
+                });
+
+                // Plot twist overlay
+                document.getElementById('plotTwistOverlay').addEventListener('click', () => {
+                    this.closePlotTwist();
+                });
+            }
+
+            selectIngredient(type, element) {
+                if (this.selectedIngredients.length < 2 * this.ingredientMultiplier) {
+                    this.selectedIngredients.push(type);
+                    element.classList.add('selected');
+                    
+                    if (this.selectedIngredients.length >= 2 * this.ingredientMultiplier) {
+                        this.showNotification('Ready to bake!');
+                        document.getElementById('bakeBtn').disabled = false;
+                    }
+                }
+            }
+
+            bakeCake() {
+                if (this.isBaking) return;
+                if (this.selectedIngredients.length < 2 * this.ingredientMultiplier) {
+                    this.showNotification('Need more ingredients!');
+                    return;
+                }
+
+                this.isBaking = true;
+                const bakeBtn = document.getElementById('bakeBtn');
+                const oven = document.getElementById('oven');
+                bakeBtn.disabled = true;
+                bakeBtn.textContent = 'BAKING...';
+                oven.classList.add('baking');
+
+                setTimeout(() => {
+                    this.createCake3D();
+                    this.isBaking = false;
+                    this.selectedIngredients = [];
+                    document.querySelectorAll('.ingredient-btn').forEach(btn => btn.classList.remove('selected'));
+                    bakeBtn.textContent = 'BAKE CAKE';
+                    oven.classList.remove('baking');
+                    this.showNotification('Cake ready! Click the cake to serve.');
+                }, this.bakingSpeed);
+            }
+
+            serveCake(cake) {
+                if (!this.currentCustomer) return;
+
+                const satisfaction = this.isDay ? 0.8 : 0.5;
+                const tip = Math.random() < satisfaction ? 3 : 1;
+                
+                this.coins += 2 + tip;
+                this.cakesSold++;
+                
+                // Remove cake
+                const index = this.cakes3D.indexOf(cake);
+                if (index > -1) {
+                    this.cakes3D.splice(index, 1);
+                }
+                cake.remove();
+                
+                // Customer happy animation
+                const customer = document.getElementById('customer');
+                customer.classList.add('happy');
+                
+                setTimeout(() => {
+                    customer.classList.remove('happy');
+                    this.spawnCustomer();
+                }, 500);
+
+                this.updateUI();
+                this.checkPlotTwist();
+                this.increaseChaos();
+            }
+
+            spawnCustomer() {
+                const customer = document.getElementById('customer');
+                const color = this.animalColors[Math.floor(Math.random() * this.animalColors.length)];
+                customer.querySelector('.customer-body').style.background = `linear-gradient(180deg, ${color} 0%, ${this.darkenColor(color)} 100%)`;
+                customer.querySelector('.customer-head').style.background = `linear-gradient(180deg, ${color} 0%, ${this.darkenColor(color)} 100%)`;
+                this.currentCustomer = customer;
+                this.customerPatience = this.isDay ? 150 : 100;
+            }
+
+            spawnVillagers() {
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        this.createVillager3D();
+                    }, i * 300);
+                }
+            }
+
+            animateVillager(villager) {
+                const villagerData = this.villagers3D.find(v => v.element === villager);
+                if (!villagerData) return;
+
+                const moveInterval = setInterval(() => {
+                    if (!villager.parentNode) {
+                        clearInterval(moveInterval);
+                        return;
+                    }
+                    
+                    const currentLeft = parseFloat(villager.style.left);
+                    const currentBottom = parseFloat(villager.style.bottom);
+                    
+                    let newLeft = currentLeft + villagerData.moveDirection.x * 0.5;
+                    let newBottom = currentBottom + villagerData.moveDirection.z * 0.5;
+                    
+                    // Boundary check
+                    if (newLeft < 5 || newLeft > 85) {
+                        villagerData.moveDirection.x *= -1;
+                        newLeft = currentLeft;
+                    }
+                    if (newBottom < 10 || newBottom > 50) {
+                        villagerData.moveDirection.z *= -1;
+                        newBottom = currentBottom;
+                    }
+                    
+                    villager.style.left = newLeft + '%';
+                    villager.style.bottom = newBottom + 'px';
+                    
+                    // Apply chaos effects
+                    if (this.chaosLevel > 1) {
+                        const floatHeight = Math.sin(Date.now() * 0.001 + villagerData.originalPosition.x) * this.chaosLevel * 3;
+                        villager.style.transform = `translateY(${floatHeight}px)`;
+                    }
+                    
+                    if (this.chaosLevel > 2) {
+                        villager.classList.add('dancing');
+                    } else {
+                        villager.classList.remove('dancing');
+                    }
+                    
+                    if (this.chaosLevel > 3) {
+                        villager.classList.add('chaotic');
+                    } else {
+                        villager.classList.remove('chaotic');
+                    }
+                }, 50);
+            }
+
+            increaseChaos() {
+                if (this.cakesSold > 100) {
+                    this.chaosLevel = 1;
+                }
+                if (this.cakesSold > 300) {
+                    this.chaosLevel = 2;
+                }
+                if (this.cakesSold > 500) {
+                    this.chaosLevel = 3;
+                }
+                if (this.cakesSold > 800) {
+                    this.chaosLevel = 4;
+                }
+            }
+
+            checkPlotTwist() {
+                if (this.cakesSold >= 1000 && !this.plotTwistTriggered) {
+                    this.triggerPlotTwist();
+                }
+            }
+
+            triggerPlotTwist() {
+                this.plotTwistTriggered = true;
+                this.chaosLevel = 10;
+                
+                const overlay = document.getElementById('plotTwistOverlay');
+                overlay.classList.add('active');
+                
+                // Apply maximum chaos to villagers
+                this.villagers3D.forEach(villagerData => {
+                    villagerData.element.classList.add('chaotic', 'dancing');
+                    villagerData.element.style.transform = `translateY(${Math.random() * 50}px) rotate(${Math.random() * 360}deg)`;
+                });
+                
+                // Make buildings float
+                this.building3Ds.forEach(building => {
+                    building.style.transform = `translateY(${Math.random() * 30}px) rotate(${Math.random() * 20}deg)`;
+                });
+            }
+
+            closePlotTwist() {
+                const overlay = document.getElementById('plotTwistOverlay');
+                overlay.classList.remove('active');
+            }
+
+            upgradeBakery() {
+                const upgradeCost = this.bakeryLevel * 10;
+                if (this.coins >= upgradeCost) {
+                    this.coins -= upgradeCost;
+                    this.bakeryLevel++;
+                    
+                    this.bakingSpeed = Math.max(1000, this.bakingSpeed - 200);
+                    if (this.bakeryLevel % 2 === 0) {
+                        this.ingredientMultiplier++;
+                    }
+                    
+                    this.updateUI();
+                    this.showNotification(`Bakery upgraded to level ${this.bakeryLevel}!`);
+                }
+            }
+
+            startDayNightCycle() {
+                setInterval(() => {
+                    this.isDay = !this.isDay;
+                    const village = document.getElementById('village');
+                    village.className = this.isDay ? 'village day' : 'village night';
+                    this.updateUI();
+                }, 30000);
+            }
+
+            startGameLoop() {
+                setInterval(() => {
+                    if (this.currentCustomer && this.customerPatience > 0) {
+                        this.customerPatience--;
+                        if (this.customerPatience === 0) {
+                            this.spawnCustomer();
+                        }
+                    }
+                }, 100);
+            }
+
+            updateUI() {
+                document.getElementById('cakeCount').textContent = this.cakesSold;
+                document.getElementById('coins').textContent = this.coins;
+                document.getElementById('timeOfDay').textContent = this.isDay ? 'Day' : 'Night';
+                document.getElementById('bakeryLevel').textContent = this.bakeryLevel;
+                
+                const upgradeBtn = document.getElementById('upgradeBtn');
+                const upgradeCost = this.bakeryLevel * 10;
+                upgradeBtn.textContent = `Upgrade (${upgradeCost} coins)`;
+                upgradeBtn.disabled = this.coins < upgradeCost;
+            }
+
+            showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            }
+        }
+
+        // Start the game
+        const game = new WoodshireBakeryCSS3D();
+    </script>
+</body>
+</html>

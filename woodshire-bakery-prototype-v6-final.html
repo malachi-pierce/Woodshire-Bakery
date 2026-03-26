@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woodshire Bakery 3D - Final Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        .game-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .bakery {
+            width: 60%;
+            position: relative;
+            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4b0 100%);
+            border-right: 4px solid #8b6f47;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        /* Dynamic sky gradient */
+        .village {
+            width: 40%;
+            position: relative;
+            background: linear-gradient(135deg, #87ceeb 0%, #98d8e8 100%);
+            transition: background 15s ease-in-out;
+            transform-style: preserve-3d;
+        }
+
+        .village.night {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        /* Sun and Moon */
+        .celestial-body {
+            position: fixed;
+            border-radius: 50%;
+            transition: all 15s ease-in-out;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .sun {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ffeb3b 0%, #ffd700 40%, #ffa500 100%);
+            box-shadow: 0 0 50px #ffd700, 0 0 100px #ffa500;
+            top: 100px;
+            right: 100px;
+        }
+
+        .moon {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #f0f0f0 0%, #d0d0d0 50%, #a0a0a0 100%);
+            box-shadow: 0 0 30px #f0f0f0, 0 0 60px #d0d0d0;
+            top: 100px;
+            right: 100px;
+            opacity: 0;
+            transform: translateY(200px) scale(0.8);
+        }
+
+        .sun.setting {
+            top: 300px;
+            right: 200px;
+            opacity: 0;
+            transform: scale(0.6);
+        }
+
+        .moon.rising {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .moon.setting {
+            top: 300px;
+            right: 50px;
+            opacity: 0;
+            transform: scale(0.6);
+        }
+
+        .sun.rising {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* 3D Bakery Environment */
+        .bakery-3d {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: rotateX(2deg);
+        }
+
+        .bakery-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(90deg, #d4a574 0%, #c19a6b 50%, #d4a574 100%);
+            transform: rotateX(90deg) translateZ(-200px);
+            box-shadow: 0 0 100px rgba(0,0,0,0.3);
+        }
+
+        .bakery-wall {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(180deg, #e8d4b0 0%, #d4a574 100%);
+            transform: translateZ(-300px);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+        }
+
+        .counter-3d {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(-100px);
+            width: 350px;
+            height: 100px;
+            background: linear-gradient(180deg, #8b6f47 0%, #654321 100%);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .oven-3d {
+            position: absolute;
+            bottom: 180px;
+            right: 80px;
+            width: 140px;
+            height: 160px;
+            background: linear-gradient(180deg, #4a3c28 0%, #2a1810 100%);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transform: translateZ(-50px);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .oven-3d:hover {
+            transform: translateZ(-50px) scale(1.05);
+            box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+        }
+
+        .oven-3d.baking {
+            animation: bake-glow 2s ease-in-out;
+        }
+
+        @keyframes bake-glow {
+            0%, 100% { 
+                background: linear-gradient(180deg, #4a3c28 0%, #2a1810 100%);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            }
+            50% { 
+                background: linear-gradient(180deg, #ff6b6b 0%, #ff4444 100%);
+                box-shadow: 0 15px 60px rgba(255, 107, 107, 0.8);
+            }
+        }
+
+        .window-3d {
+            position: absolute;
+            top: 80px;
+            right: 60px;
+            width: 180px;
+            height: 140px;
+            background: linear-gradient(135deg, #87ceeb 0%, #98d8e8 100%);
+            border: 10px solid #8b6f47;
+            border-radius: 15px;
+            transform: translateZ(-20px);
+            box-shadow: inset 0 0 30px rgba(255,255,255,0.4);
+        }
+
+        /* 3D Village Environment */
+        .village-3d {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: rotateX(5deg);
+        }
+
+        .village-ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(90deg, #90ee90 0%, #98d898 50%, #90ee90 100%);
+            transform: rotateX(90deg) translateZ(-250px);
+            box-shadow: 0 0 150px rgba(0,0,0,0.3);
+        }
+
+        .village-path {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) rotateX(90deg) translateZ(-249px);
+            width: 60px;
+            height: 100%;
+            background: linear-gradient(90deg, #8b7355 0%, #a0826d 50%, #8b7355 100%);
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        }
+
+        /* 3D Animals - Main Focus */
+        .animal-3d {
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .animal-3d:hover {
+            transform: scale(1.1) rotateY(10deg);
+        }
+
+        /* Fox 3D */
+        .fox-3d {
+            width: 80px;
+            height: 100px;
+        }
+
+        .fox-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 70px;
+            background: linear-gradient(135deg, #ff6b35 0%, #d2691e 100%);
+            border-radius: 30px 30px 20px 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .fox-head {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ff8c69 0%, #ff6b35 100%);
+            border-radius: 25px 25px 20px 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .fox-ear {
+            position: absolute;
+            top: -10px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 20px solid #ff6b35;
+        }
+
+        .fox-ear.left { left: 8px; transform: rotate(-15deg); }
+        .fox-ear.right { right: 8px; transform: rotate(15deg); }
+
+        .fox-eye {
+            position: absolute;
+            top: 15px;
+            width: 10px;
+            height: 10px;
+            background: #000;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .fox-eye.left { left: 12px; }
+        .fox-eye.right { right: 12px; }
+
+        .fox-nose {
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .fox-tail {
+            position: absolute;
+            bottom: 10px;
+            right: -15px;
+            width: 40px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff8c69 0%, #ff6b35 100%);
+            border-radius: 20px;
+            transform: rotate(25deg);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .fox-3d.happy .fox-tail {
+            animation: wag-tail 0.5s ease-in-out infinite;
+        }
+
+        @keyframes wag-tail {
+            0%, 100% { transform: rotate(25deg); }
+            50% { transform: rotate(35deg); }
+        }
+
+        /* Deer 3D */
+        .deer-3d {
+            width: 70px;
+            height: 90px;
+        }
+
+        .deer-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 60px;
+            background: linear-gradient(135deg, #8b6f47 0%, #654321 100%);
+            border-radius: 25px 25px 15px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .deer-head {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 45px;
+            background: linear-gradient(135deg, #a0826d 0%, #8b6f47 100%);
+            border-radius: 20px 20px 15px 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .deer-antler {
+            position: absolute;
+            top: -15px;
+            width: 3px;
+            height: 20px;
+            background: #654321;
+            border-radius: 2px;
+        }
+
+        .deer-antler.left { left: 10px; transform: rotate(-10deg); }
+        .deer-antler.right { right: 10px; transform: rotate(10deg); }
+
+        .deer-eye {
+            position: absolute;
+            top: 12px;
+            width: 8px;
+            height: 8px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .deer-eye.left { left: 10px; }
+        .deer-eye.right { right: 10px; }
+
+        /* Raccoon 3D */
+        .raccoon-3d {
+            width: 75px;
+            height: 85px;
+        }
+
+        .raccoon-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55px;
+            height: 65px;
+            background: linear-gradient(135deg, #696969 0%, #4a4a4a 100%);
+            border-radius: 27px 27px 15px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .raccoon-head {
+            position: absolute;
+            bottom: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #808080 0%, #696969 100%);
+            border-radius: 22px 22px 15px 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .raccoon-mask {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 35px;
+            height: 20px;
+            background: #000;
+            border-radius: 10px;
+            opacity: 0.8;
+        }
+
+        .raccoon-eye {
+            position: absolute;
+            top: 10px;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .raccoon-eye.left { left: 10px; }
+        .raccoon-eye.right { right: 10px; }
+
+        /* Monkey 3D */
+        .monkey-3d {
+            width: 65px;
+            height: 95px;
+        }
+
+        .monkey-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 70px;
+            background: linear-gradient(135deg, #8b6f47 0%, #654321 100%);
+            border-radius: 22px 22px 15px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .monkey-head {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #a0826d 0%, #8b6f47 100%);
+            border-radius: 20px 20px 15px 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .monkey-ear {
+            position: absolute;
+            top: 5px;
+            width: 15px;
+            height: 20px;
+            background: #8b6f47;
+            border-radius: 50%;
+        }
+
+        .monkey-ear.left { left: -5px; }
+        .monkey-ear.right { right: -5px; }
+
+        .monkey-face {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 20px;
+            background: #d4a574;
+            border-radius: 10px;
+        }
+
+        .monkey-eye {
+            position: absolute;
+            top: 12px;
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .monkey-eye.left { left: 8px; }
+        .monkey-eye.right { right: 8px; }
+
+        /* Cow 3D */
+        .cow-3d {
+            width: 85px;
+            height: 95px;
+        }
+
+        .cow-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 65px;
+            height: 70px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            border-radius: 32px 32px 15px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cow-spot {
+            position: absolute;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .cow-spot:nth-child(1) { top: 10px; left: 10px; width: 15px; height: 15px; }
+        .cow-spot:nth-child(2) { top: 20px; right: 8px; width: 12px; height: 12px; }
+        .cow-spot:nth-child(3) { bottom: 15px; left: 15px; width: 18px; height: 18px; }
+
+        .cow-head {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 45px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            border-radius: 25px 25px 15px 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .cow-horn {
+            position: absolute;
+            top: -8px;
+            width: 4px;
+            height: 12px;
+            background: #fff;
+            border: 1px solid #000;
+            border-radius: 2px;
+        }
+
+        .cow-horn.left { left: 12px; }
+        .cow-horn.right { right: 12px; }
+
+        .cow-muzzle {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 15px;
+            background: #ff69b4;
+            border-radius: 15px;
+        }
+
+        .cow-eye {
+            position: absolute;
+            top: 10px;
+            width: 8px;
+            height: 8px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .cow-eye.left { left: 12px; }
+        .cow-eye.right { right: 12px; }
+
+        /* 3D Trees */
+        .tree-3d {
+            position: absolute;
+            transform-style: preserve-3d;
+        }
+
+        .tree-trunk {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 80px;
+            background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+            border-radius: 5px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .tree-leaves {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #228b22 0%, #32cd32 50%, #228b22 100%);
+            border-radius: 50%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        /* 3D Buildings */
+        .building-3d {
+            position: absolute;
+            transform-style: preserve-3d;
+        }
+
+        .building-base {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 90px;
+            background: linear-gradient(180deg, #cd853f 0%, #8b4513 100%);
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .building-roof {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 45px solid transparent;
+            border-right: 45px solid transparent;
+            border-bottom: 35px solid #8b0000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .building-window {
+            position: absolute;
+            width: 15px;
+            height: 20px;
+            background: #87ceeb;
+            border: 2px solid #654321;
+            border-radius: 3px;
+        }
+
+        .building-window:nth-child(3) { top: 20px; left: 15px; }
+        .building-window:nth-child(4) { top: 20px; right: 15px; }
+        .building-window:nth-child(5) { top: 50px; left: 15px; }
+        .building-window:nth-child(6) { top: 50px; right: 15px; }
+
+        /* 3D Cakes - WORKING VERSION */
+        .cake-3d {
+            position: absolute;
+            width: 70px;
+            height: 50px;
+            transform-style: preserve-3d;
+            transition: all 0.3s;
+            cursor: pointer;
+            z-index: 9999;
+        }
+
+        .cake-3d:hover {
+            transform: scale(1.1) rotateY(15deg);
+        }
+
+        .cake-base {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 25px;
+            background: linear-gradient(180deg, #ffeb3b 0%, #f9a825 100%);
+            border-radius: 30px 30px 5px 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .cake-frosting {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 65px;
+            height: 15px;
+            background: linear-gradient(180deg, #ff69b4 0%, #ff1493 100%);
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .cake-cherry {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, #ff0000 0%, #8b0000 100%);
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        /* UI Elements */
+        .bakery-sign {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #d4a574 0%, #c19a6b 100%);
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: 4px solid #8b6f47;
+            font-weight: bold;
+            font-size: 22px;
+            color: #3a2a1a;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 100;
+            text-align: center;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 200;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        .stat {
+            margin: 8px 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .ingredients-panel {
+            position: absolute;
+            top: 150px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        .ingredient-btn {
+            display: inline-block;
+            width: 70px;
+            height: 70px;
+            margin: 8px;
+            background: linear-gradient(135deg, #d4a574 0%, #c19a6b 100%);
+            border: 3px solid #8b6f47;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 28px;
+            text-align: center;
+            line-height: 64px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .ingredient-btn:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        }
+
+        .ingredient-btn.selected {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%);
+            transform: scale(1.15);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+        }
+
+        .bake-btn {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%);
+            color: white;
+            border: none;
+            padding: 18px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+            z-index: 100;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .bake-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.6);
+        }
+
+        .bake-btn:disabled {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+            cursor: not-allowed;
+            transform: scale(1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .upgrade-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            z-index: 100;
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .upgrade-btn:hover {
+            transform: scale(1.05) translateY(-1px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.6);
+        }
+
+        .upgrade-btn:disabled {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+            cursor: not-allowed;
+            transform: scale(1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 500;
+            z-index: 300;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        /* Chaos Animations */
+        .animal-3d.chaotic {
+            animation: float-animal 4s ease-in-out infinite;
+        }
+
+        @keyframes float-animal {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-30px) rotate(5deg); }
+            75% { transform: translateY(-20px) rotate(-5deg); }
+        }
+
+        .animal-3d.dancing {
+            animation: dance-animal 1.5s ease-in-out infinite;
+        }
+
+        @keyframes dance-animal {
+            0%, 100% { transform: rotate(0deg) scaleX(1); }
+            25% { transform: rotate(-10deg) scaleX(0.9); }
+            75% { transform: rotate(10deg) scaleX(1.1); }
+        }
+
+        .tree-3d.chaotic {
+            animation: shake-tree 2s ease-in-out infinite;
+        }
+
+        @keyframes shake-tree {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+        }
+
+        .building-3d.chaotic {
+            animation: wobble-building 3s ease-in-out infinite;
+        }
+
+        @keyframes wobble-building {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            50% { transform: rotate(1deg) translateY(-5px); }
+        }
+
+        .plot-twist-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .plot-twist-overlay.active {
+            display: flex;
+        }
+
+        .plot-twist-content {
+            text-align: center;
+            color: white;
+            font-size: 28px;
+            max-width: 700px;
+            animation: fadeIn 2s ease;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="bakery">
+            <div class="bakery-sign">Woodshire Bakery</div>
+            <div class="bakery-3d">
+                <div class="bakery-floor"></div>
+                <div class="bakery-wall"></div>
+                <div class="counter-3d" id="counter"></div>
+                <div class="oven-3d" id="oven"></div>
+                <div class="window-3d"></div>
+                <div class="customer-3d fox-3d" id="customer">
+                    <div class="fox-body"></div>
+                    <div class="fox-head">
+                        <div class="fox-ear left"></div>
+                        <div class="fox-ear right"></div>
+                        <div class="fox-eye left"></div>
+                        <div class="fox-eye right"></div>
+                        <div class="fox-nose"></div>
+                    </div>
+                    <div class="fox-tail"></div>
+                </div>
+            </div>
+            <div class="ingredients-panel">
+                <div class="ingredient-btn" data-ingredient="flour">🌾</div>
+                <div class="ingredient-btn" data-ingredient="sugar">🍚</div>
+                <div class="ingredient-btn" data-ingredient="eggs">🥚</div>
+                <div class="ingredient-btn" data-ingredient="milk">🥛</div>
+            </div>
+            <button class="bake-btn" id="bakeBtn" disabled>BAKE CAKE</button>
+            <button class="upgrade-btn" id="upgradeBtn">Upgrade (10 coins)</button>
+        </div>
+        <div class="village day" id="village">
+            <div class="celestial-body sun" id="sun"></div>
+            <div class="celestial-body moon" id="moon"></div>
+            <div class="village-3d">
+                <div class="village-ground"></div>
+                <div class="village-path"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui">
+        <div class="stat">🎂 Cakes Sold: <span id="cakeCount">0</span></div>
+        <div class="stat">🪙 Coins: <span id="coins">0</span></div>
+        <div class="stat">🌞 Time: <span id="timeOfDay">Day</span></div>
+        <div class="stat">⭐ Bakery Level: <span id="bakeryLevel">1</span></div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <div class="plot-twist-overlay" id="plotTwistOverlay">
+        <div class="plot-twist-content">
+            <h2>🎭 You were so busy baking...</h2>
+            <p>you never looked outside.</p>
+            <p style="margin-top: 25px; font-size: 18px;">Click to continue the chaos...</p>
+        </div>
+    </div>
+
+    <script>
+        class WoodshireBakery3D {
+            constructor() {
+                this.cakesSold = 0;
+                this.coins = 0;
+                this.bakeryLevel = 1;
+                this.isDay = true;
+                this.selectedIngredients = [];
+                this.isBaking = false;
+                this.currentCustomer = null;
+                this.customerPatience = 100;
+                this.plotTwistTriggered = false;
+                this.bakingSpeed = 2000;
+                this.ingredientMultiplier = 1;
+                this.chaosLevel = 0;
+                
+                this.cakes3D = [];
+                this.villagers3D = [];
+                this.trees3D = [];
+                this.buildings3Ds = [];
+                
+                this.animalTypes = ['fox', 'deer', 'raccoon', 'monkey', 'cow'];
+                
+                this.init();
+            }
+
+            init() {
+                this.createVillageEnvironment();
+                this.setupEventListeners();
+                this.startGameLoop();
+                this.spawnCustomer();
+                this.startDayNightCycle();
+                this.spawnVillagers();
+            }
+
+            createVillageEnvironment() {
+                const village3D = document.querySelector('.village-3d');
+                
+                // Create trees
+                for (let i = 0; i < 10; i++) {
+                    const tree = this.createTree3D();
+                    const x = Math.random() * 80 + 10;
+                    const z = Math.random() * 60 + 20;
+                    tree.style.left = x + '%';
+                    tree.style.bottom = z + 'px';
+                    village3D.appendChild(tree);
+                    this.trees3D.push(tree);
+                }
+                
+                // Create buildings
+                for (let i = 0; i < 8; i++) {
+                    const building = this.createBuilding3D();
+                    const x = Math.random() * 70 + 15;
+                    const z = Math.random() * 50 + 25;
+                    building.style.left = x + '%';
+                    building.style.bottom = z + 'px';
+                    village3D.appendChild(building);
+                    this.buildings3Ds.push(building);
+                }
+            }
+
+            createTree3D() {
+                const tree = document.createElement('div');
+                tree.className = 'tree-3d';
+                tree.innerHTML = `
+                    <div class="tree-trunk"></div>
+                    <div class="tree-leaves"></div>
+                `;
+                return tree;
+            }
+
+            createBuilding3D() {
+                const building = document.createElement('div');
+                building.className = 'building-3d';
+                building.innerHTML = `
+                    <div class="building-base">
+                        <div class="building-window"></div>
+                        <div class="building-window"></div>
+                        <div class="building-window"></div>
+                        <div class="building-window"></div>
+                    </div>
+                    <div class="building-roof"></div>
+                `;
+                return building;
+            }
+
+            createAnimal3D(type, x, z) {
+                const animal = document.createElement('div');
+                animal.className = `animal-3d ${type}-3d`;
+                
+                let animalHTML = '';
+                switch(type) {
+                    case 'fox':
+                        animalHTML = `
+                            <div class="fox-body"></div>
+                            <div class="fox-head">
+                                <div class="fox-ear left"></div>
+                                <div class="fox-ear right"></div>
+                                <div class="fox-eye left"></div>
+                                <div class="fox-eye right"></div>
+                                <div class="fox-nose"></div>
+                            </div>
+                            <div class="fox-tail"></div>
+                        `;
+                        break;
+                    case 'deer':
+                        animalHTML = `
+                            <div class="deer-body"></div>
+                            <div class="deer-head">
+                                <div class="deer-antler left"></div>
+                                <div class="deer-antler right"></div>
+                                <div class="deer-eye left"></div>
+                                <div class="deer-eye right"></div>
+                            </div>
+                        `;
+                        break;
+                    case 'raccoon':
+                        animalHTML = `
+                            <div class="raccoon-body"></div>
+                            <div class="raccoon-head">
+                                <div class="raccoon-mask"></div>
+                                <div class="raccoon-eye left"></div>
+                                <div class="raccoon-eye right"></div>
+                            </div>
+                        `;
+                        break;
+                    case 'monkey':
+                        animalHTML = `
+                            <div class="monkey-body"></div>
+                            <div class="monkey-head">
+                                <div class="monkey-ear left"></div>
+                                <div class="monkey-ear right"></div>
+                                <div class="monkey-face"></div>
+                                <div class="monkey-eye left"></div>
+                                <div class="monkey-eye right"></div>
+                            </div>
+                        `;
+                        break;
+                    case 'cow':
+                        animalHTML = `
+                            <div class="cow-body">
+                                <div class="cow-spot"></div>
+                                <div class="cow-spot"></div>
+                                <div class="cow-spot"></div>
+                            </div>
+                            <div class="cow-head">
+                                <div class="cow-horn left"></div>
+                                <div class="cow-horn right"></div>
+                                <div class="cow-muzzle"></div>
+                                <div class="cow-eye left"></div>
+                                <div class="cow-eye right"></div>
+                            </div>
+                        `;
+                        break;
+                }
+                
+                animal.innerHTML = animalHTML;
+                animal.style.left = x + '%';
+                animal.style.bottom = z + 'px';
+                
+                return animal;
+            }
+
+            createCake3D() {
+                const cake = document.createElement('div');
+                cake.className = 'cake-3d';
+                cake.innerHTML = `
+                    <div class="cake-base"></div>
+                    <div class="cake-frosting"></div>
+                    <div class="cake-cherry"></div>
+                `;
+                
+                // Position relative to counter but append to body
+                const counter = document.getElementById('counter');
+                const counterRect = counter.getBoundingClientRect();
+                
+                const x = Math.random() * 200 + 75;
+                const y = Math.random() * 30 + 20;
+                
+                cake.style.position = 'fixed';
+                cake.style.left = (counterRect.left + x) + 'px';
+                cake.style.top = (counterRect.top + y) + 'px';
+                cake.style.cursor = 'pointer';
+                cake.style.zIndex = '9999';
+                
+                // Click event
+                cake.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.serveCake(cake);
+                });
+                
+                // Append to body
+                document.body.appendChild(cake);
+                this.cakes3D.push(cake);
+            }
+
+            spawnCustomer() {
+                const customer = document.getElementById('customer');
+                const animalType = this.animalTypes[Math.floor(Math.random() * this.animalTypes.length)];
+                
+                // Replace customer with new animal type
+                const newCustomer = this.createAnimal3D(animalType, 50, 50);
+                newCustomer.id = 'customer';
+                newCustomer.style.position = 'absolute';
+                newCustomer.style.left = '50%';
+                newCustomer.style.bottom = '50px';
+                newCustomer.style.transform = 'translateX(-50%)';
+                
+                customer.parentNode.replaceChild(newCustomer, customer);
+                this.currentCustomer = newCustomer;
+                this.customerPatience = this.isDay ? 150 : 100;
+            }
+
+            spawnVillagers() {
+                const village3D = document.querySelector('.village-3d');
+                
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => {
+                        const animalType = this.animalTypes[Math.floor(Math.random() * this.animalTypes.length)];
+                        const villager = this.createAnimal3D(animalType, 
+                            Math.random() * 80 + 10, 
+                            Math.random() * 40 + 10
+                        );
+                        
+                        this.villagers3D.push({
+                            element: villager,
+                            originalPosition: { 
+                                x: parseFloat(villager.style.left), 
+                                z: parseFloat(villager.style.bottom) 
+                            },
+                            moveDirection: { 
+                                x: (Math.random() - 0.5) * 2, 
+                                z: (Math.random() - 0.5) * 2 
+                            }
+                        });
+                        
+                        village3D.appendChild(villager);
+                        this.animateVillager(villager);
+                    }, i * 300);
+                }
+            }
+
+            animateVillager(villager) {
+                const villagerData = this.villagers3D.find(v => v.element === villager);
+                if (!villagerData) return;
+
+                const moveInterval = setInterval(() => {
+                    if (!villager.parentNode) {
+                        clearInterval(moveInterval);
+                        return;
+                    }
+                    
+                    const currentLeft = parseFloat(villager.style.left);
+                    const currentBottom = parseFloat(villager.style.bottom);
+                    
+                    let newLeft = currentLeft + villagerData.moveDirection.x * 0.3;
+                    let newBottom = currentBottom + villagerData.moveDirection.z * 0.3;
+                    
+                    // Boundary check
+                    if (newLeft < 5 || newLeft > 85) {
+                        villagerData.moveDirection.x *= -1;
+                        newLeft = currentLeft;
+                    }
+                    if (newBottom < 10 || newBottom > 50) {
+                        villagerData.moveDirection.z *= -1;
+                        newBottom = currentBottom;
+                    }
+                    
+                    villager.style.left = newLeft + '%';
+                    villager.style.bottom = newBottom + 'px';
+                    
+                    // Apply chaos effects
+                    this.applyChaosEffects(villager);
+                }, 50);
+            }
+
+            applyChaosEffects(element) {
+                // Remove existing chaos classes
+                element.classList.remove('chaotic', 'dancing');
+                
+                if (this.chaosLevel > 1 && Math.random() < this.chaosLevel * 0.15) {
+                    element.classList.add('chaotic');
+                }
+                
+                if (this.chaosLevel > 2 && Math.random() < this.chaosLevel * 0.1) {
+                    element.classList.add('dancing');
+                }
+                
+                if (this.chaosLevel > 3 && Math.random() < 0.2) {
+                    const currentBottom = parseFloat(element.style.bottom);
+                    element.style.bottom = (currentBottom + (Math.random() - 0.5) * 20) + 'px';
+                }
+            }
+
+            setupEventListeners() {
+                // Ingredient selection
+                document.querySelectorAll('.ingredient-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.selectIngredient(e.target.dataset.ingredient, e.target);
+                    });
+                });
+
+                // Bake button
+                document.getElementById('bakeBtn').addEventListener('click', () => {
+                    this.bakeCake();
+                });
+
+                // Oven click
+                document.getElementById('oven').addEventListener('click', () => {
+                    this.bakeCake();
+                });
+
+                // Upgrade button
+                document.getElementById('upgradeBtn').addEventListener('click', () => {
+                    this.upgradeBakery();
+                });
+
+                // Plot twist overlay
+                document.getElementById('plotTwistOverlay').addEventListener('click', () => {
+                    this.closePlotTwist();
+                });
+            }
+
+            selectIngredient(type, element) {
+                if (this.selectedIngredients.length < 2 * this.ingredientMultiplier) {
+                    this.selectedIngredients.push(type);
+                    element.classList.add('selected');
+                    
+                    if (this.selectedIngredients.length >= 2 * this.ingredientMultiplier) {
+                        this.showNotification('🎉 Ready to bake!');
+                        document.getElementById('bakeBtn').disabled = false;
+                    }
+                }
+            }
+
+            bakeCake() {
+                if (this.isBaking) return;
+                if (this.selectedIngredients.length < 2 * this.ingredientMultiplier) {
+                    this.showNotification('❌ Need more ingredients!');
+                    return;
+                }
+
+                this.isBaking = true;
+                const bakeBtn = document.getElementById('bakeBtn');
+                const oven = document.getElementById('oven');
+                bakeBtn.disabled = true;
+                bakeBtn.textContent = '🔥 BAKING...';
+                oven.classList.add('baking');
+
+                setTimeout(() => {
+                    this.createCake3D();
+                    this.isBaking = false;
+                    this.selectedIngredients = [];
+                    document.querySelectorAll('.ingredient-btn').forEach(btn => btn.classList.remove('selected'));
+                    bakeBtn.textContent = 'BAKE CAKE';
+                    oven.classList.remove('baking');
+                    this.showNotification('🎂 Cake ready! Click to serve.');
+                }, this.bakingSpeed);
+            }
+
+            serveCake(cake) {
+                if (!this.currentCustomer) return;
+
+                const satisfaction = this.isDay ? 0.8 : 0.5;
+                const tip = Math.random() < satisfaction ? 3 : 1;
+                
+                this.coins += 2 + tip;
+                this.cakesSold++;
+                
+                // Remove cake
+                const index = this.cakes3D.indexOf(cake);
+                if (index > -1) {
+                    this.cakes3D.splice(index, 1);
+                }
+                cake.remove();
+                
+                // Customer happy animation
+                this.currentCustomer.classList.add('happy');
+                
+                setTimeout(() => {
+                    this.currentCustomer.classList.remove('happy');
+                    this.spawnCustomer();
+                }, 800);
+
+                this.updateUI();
+                this.checkPlotTwist();
+                this.increaseChaos();
+            }
+
+            increaseChaos() {
+                if (this.cakesSold > 100) {
+                    this.chaosLevel = 1;
+                }
+                if (this.cakesSold > 300) {
+                    this.chaosLevel = 2;
+                }
+                if (this.cakesSold > 500) {
+                    this.chaosLevel = 3;
+                }
+                if (this.cakesSold > 800) {
+                    this.chaosLevel = 4;
+                }
+
+                // Apply chaos to environment
+                this.applyEnvironmentChaos();
+            }
+
+            applyEnvironmentChaos() {
+                // Apply chaos to trees
+                this.trees3D.forEach(tree => {
+                    this.applyChaosEffects(tree);
+                });
+                
+                // Apply chaos to buildings
+                this.buildings3Ds.forEach(building => {
+                    this.applyChaosEffects(building);
+                });
+            }
+
+            checkPlotTwist() {
+                if (this.cakesSold >= 1000 && !this.plotTwistTriggered) {
+                    this.triggerPlotTwist();
+                }
+            }
+
+            triggerPlotTwist() {
+                this.plotTwistTriggered = true;
+                this.chaosLevel = 10;
+                
+                const overlay = document.getElementById('plotTwistOverlay');
+                overlay.classList.add('active');
+                
+                // Apply maximum chaos to everything
+                this.villagers3D.forEach(villagerData => {
+                    villagerData.element.classList.add('chaotic', 'dancing');
+                    villagerData.element.style.transform = `translateY(${Math.random() * 60}px) rotate(${Math.random() * 360}deg) scale(${0.8 + Math.random() * 0.4})`;
+                });
+                
+                this.trees3D.forEach(tree => {
+                    tree.classList.add('chaotic');
+                    tree.style.transform = `translateY(${Math.random() * 40}px) rotate(${Math.random() * 30}deg)`;
+                });
+                
+                this.buildings3Ds.forEach(building => {
+                    building.classList.add('chaotic');
+                    building.style.transform = `translateY(${Math.random() * 50}px) rotate(${Math.random() * 15}deg)`;
+                });
+            }
+
+            closePlotTwist() {
+                const overlay = document.getElementById('plotTwistOverlay');
+                overlay.classList.remove('active');
+            }
+
+            upgradeBakery() {
+                const upgradeCost = this.bakeryLevel * 10;
+                if (this.coins >= upgradeCost) {
+                    this.coins -= upgradeCost;
+                    this.bakeryLevel++;
+                    
+                    this.bakingSpeed = Math.max(1000, this.bakingSpeed - 200);
+                    if (this.bakeryLevel % 2 === 0) {
+                        this.ingredientMultiplier++;
+                    }
+                    
+                    this.updateUI();
+                    this.showNotification(`⭐ Bakery upgraded to level ${this.bakeryLevel}!`);
+                }
+            }
+
+            startDayNightCycle() {
+                setInterval(() => {
+                    this.transitionDayNight();
+                }, 30000); // Change every 30 seconds
+            }
+
+            transitionDayNight() {
+                const village = document.getElementById('village');
+                const sun = document.getElementById('sun');
+                const moon = document.getElementById('moon');
+                
+                if (this.isDay) {
+                    // Transition to night (sunset)
+                    // Phase 1: Blue to orange (0-5s)
+                    village.style.background = 'linear-gradient(135deg, #87ceeb 0%, #ff7e5f 50%, #feb47b 100%)';
+                    sun.classList.add('setting');
+                    
+                    // Phase 2: Orange to purple (5-10s)
+                    setTimeout(() => {
+                        village.style.background = 'linear-gradient(135deg, #ff7e5f 0%, #9b59b6 50%, #8e44ad 100%)';
+                    }, 5000);
+                    
+                    // Phase 3: Purple to black (10-15s)
+                    setTimeout(() => {
+                        village.style.background = 'linear-gradient(135deg, #9b59b6 0%, #2c3e50 50%, #1a1a2e 100%)';
+                        moon.classList.add('rising');
+                        sun.classList.remove('setting');
+                        sun.classList.add('setting');
+                        this.isDay = false;
+                        this.updateUI();
+                    }, 10000);
+                    
+                } else {
+                    // Transition to day (sunrise)
+                    // Phase 1: Black to purple (0-5s)
+                    village.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #8e44ad 50%, #9b59b6 100%)';
+                    moon.classList.add('setting');
+                    
+                    // Phase 2: Purple to orange (5-10s)
+                    setTimeout(() => {
+                        village.style.background = 'linear-gradient(135deg, #9b59b6 0%, #feb47b 50%, #ff7e5f 100%)';
+                    }, 5000);
+                    
+                    // Phase 3: Orange to blue (10-15s)
+                    setTimeout(() => {
+                        village.style.background = 'linear-gradient(135deg, #ff7e5f 0%, #98d8e8 50%, #87ceeb 100%)';
+                        sun.classList.add('rising');
+                        moon.classList.remove('rising');
+                        moon.classList.remove('setting');
+                        this.isDay = true;
+                        this.updateUI();
+                    }, 10000);
+                }
+            }
+
+            startGameLoop() {
+                setInterval(() => {
+                    if (this.currentCustomer && this.customerPatience > 0) {
+                        this.customerPatience--;
+                        if (this.customerPatience === 0) {
+                            this.spawnCustomer();
+                        }
+                    }
+                }, 100);
+            }
+
+            updateUI() {
+                document.getElementById('cakeCount').textContent = this.cakesSold;
+                document.getElementById('coins').textContent = this.coins;
+                document.getElementById('timeOfDay').textContent = this.isDay ? '🌞 Day' : '🌙 Night';
+                document.getElementById('bakeryLevel').textContent = this.bakeryLevel;
+                
+                const upgradeBtn = document.getElementById('upgradeBtn');
+                const upgradeCost = this.bakeryLevel * 10;
+                upgradeBtn.textContent = `Upgrade (${upgradeCost} coins)`;
+                upgradeBtn.disabled = this.coins < upgradeCost;
+            }
+
+            showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2500);
+            }
+        }
+
+        // Start the game
+        const game = new WoodshireBakery3D();
+    </script>
+</body>
+</html>
